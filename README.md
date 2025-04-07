@@ -1,33 +1,12 @@
-# Reinforcement Learning (RL)
+# Analyzing Robustness of trained Networks with Different Seeds
 
-![RL](https://img.shields.io/badge/Reinforcement%20Learning-Sutton%20%26%20Barto-blue)
+## Overview
+In this notebook, we investigate the robustness of untrained neural networks when initialized with different random seeds. 
+The primary goal is to determine if the hidden activities of these networks remain separable under varying initial conditions.
 
-In this repository, I share my codes while studying reinforcement learning and attempting to implement the majority of algorithms introduced in the Sutton and Barto textbook.
+## Methodology
+We conducted experiments using four different random seeds to initialize the networks. The hidden activities of these untrained networks were then analyzed to assess their separability.
 
-## Table of Contents
-- [Introduction](#introduction)
-- [Algorithms](#algorithms)
-- [Usage](#usage)
-  
-## Introduction
-This repository contains implementations of various reinforcement learning algorithms, following the approaches described in the book "Reinforcement Learning: An Introduction" by Sutton and Barto. The goal is to provide a comprehensive set of examples to help others understand and apply these concepts.
-
-## Algorithms
-### Dynamic Programming
-- Policy Iteration
-- Value Iteration
-
-### Model-Free Methods
-- Monte Carlo Methods
-- Temporal-Difference Learning
-  - SARSA
-  - Q-Learning
-- Actor-Critic Methods
-  - A2C (Advantage Actor-Critic)
-
-## Usage
-Clone the repository and explore the notebooks to understand the implementation details. Each folder contains a set of Jupyter notebooks with detailed explanations and code.
-
-```sh
-git clone https://github.com/alirezaghl/RL.git
-cd RL
+##Notebookes
+This notebook contains the code for training neural networks on different tasks using various random seeds. 
+You can find the notebook [https://github.com/CMC-lab/mdm/blob/master/explorations/notebooks/31/31_Trained_SEEDS.ipynb](./31_Trained_SEEDS.ipynb).
