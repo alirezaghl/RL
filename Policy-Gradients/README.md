@@ -27,8 +27,7 @@ update_rate = 1       # How often to update networks
 episodes = 1000       # Number of episodes
 ```
 
-#### Performance
-![DDPG HalfCheetah](results/ddpg/videos/episode_1000.gif)
+
 
 ### SAC 
 
@@ -47,8 +46,7 @@ update_rate = 1       # Update rate (steps per update)
 episodes = 1000       # Number of episodes
 ```
 
-#### Performance
-![SAC HalfCheetah](results/sac/videos/episode_1000.gif)
+
 
 ### PPO
 
@@ -67,23 +65,7 @@ fc2_dims = 256        # Second hidden layer size
 episodes = 2000       # Number of episodes
 ```
 
-#### Performance
-![PPO HalfCheetah](results/ppo/videos/episode_2000.gif)
 
-## Usage
-
-To train an agent using one of the implemented algorithms:
-
-```bash
-# Train with DDPG
-python algorithms/ddpg/ddpg.py --episodes 1000
-
-# Train with SAC
-python algorithms/sac/sac.py --episodes 1000 
-
-# Train with PPO
-python algorithms/ppo/ppo.py --episodes 2000
-```
 
 
 ## Requirements

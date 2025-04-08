@@ -22,7 +22,6 @@ LOG_STD_MAX = 2
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
-# Enable cuDNN benchmark for faster training (if using CUDA)
 if device.type == 'cuda':
     torch.backends.cudnn.benchmark = True
     print("CUDA optimizations enabled")
@@ -171,15 +170,6 @@ class SAC(object):
         self.render_interval = args.render_interval
         self.reward_log_interval = args.reward_log_interval
         self.seed = args.seed
-        
-        # Updated paths to match repository structure
-        self.video_dir = os.path.join('../../results/sac/videos')
-        self.model_dir = os.path.join('../../results/sac/models')
-        self.log_dir = os.path.join('../../results/sac/logs')
-        
-        os.makedirs(self.video_dir, exist_ok=True)
-        os.makedirs(self.model_dir, exist_ok=True)
-        os.makedirs(self.log_dir, exist_ok=True)
 
     def select_action(self, state, evaluate=False):
         state = torch.tensor(state, dtype=torch.float32).to(device).unsqueeze(0)
@@ -264,14 +254,16 @@ class SAC(object):
     def train(self, num_episodes=None):
         if num_episodes is None:
             num_episodes = self.n_episodes
+            
+        os.makedirs('video-sac-halfcheetah', exist_ok=True)
+        os.makedirs('models-sac-halfcheetah', exist_ok=True)
+        os.makedirs('logs-sac-halfcheetah', exist_ok=True)
         
         # For visualization
         all_frames = []
         episode_rewards = []
         best_reward = float('-inf')
-        
-        # Log file
-        reward_log_file = open(os.path.join(self.log_dir, 'reward_log.csv'), 'w')
+        reward_log_file = open('logs-sac-halfcheetah/reward_log.csv', 'w')
         reward_log_file.write('episode,reward,avg_reward_100\n')
         
         pbar = tqdm(range(num_episodes))
@@ -316,7 +308,7 @@ class SAC(object):
                     'actor': self.actor.state_dict(),
                     'critic': self.critic.state_dict(),
                     'target_critic': self.target_critic.state_dict()
-                }, os.path.join(self.model_dir, 'sac_best.pth'))
+                }, 'models-sac-halfcheetah/sac_best.pth')
                 print(f"New best model saved with avg reward: {avg_reward:.2f}")
             
             # Log rewards and update plots at specified intervals
@@ -326,7 +318,7 @@ class SAC(object):
             
             # Render and save video periodically
             if episode % self.render_interval == 0 or episode == num_episodes - 1:
-                frames = self.record_video(os.path.join(self.video_dir, f"episode_{episode}.gif"))
+                frames = self.record_video(f"video-sac-halfcheetah/episode_{episode}.gif")
                 if frames:
                     all_frames.extend(frames[:100])  # Keep representation frames for final video
                 
@@ -339,13 +331,13 @@ class SAC(object):
         
         # Create final learning progress video
         if all_frames:
-            imageio.mimsave(os.path.join(self.video_dir, 'learning_progress.gif'), all_frames, fps=30)
+            imageio.mimsave('video-sac-halfcheetah/learning_progress.gif', all_frames, fps=30)
             
         # Final rewards plot
         self.plot_rewards(episode_rewards, num_episodes)
         
         # Final evaluation
-        self.record_video(os.path.join(self.video_dir, "final.gif"))
+        self.record_video("video-sac-halfcheetah/final.gif")
         
         return episode_rewards
     
@@ -402,13 +394,13 @@ class SAC(object):
         plt.title(f'Moving Average (Current: {moving_avg[-1]:.2f})')
         
         plt.tight_layout()
-        plt.savefig(os.path.join(self.log_dir, f'rewards_ep{episode}.png'))
+        plt.savefig(f'logs-sac-halfcheetah/rewards_ep{episode}.png')
         plt.close()
         
     def load_best_model(self):
         """Load the best saved model"""
         try:
-            checkpoint = torch.load(os.path.join(self.model_dir, 'sac_best.pth'))
+            checkpoint = torch.load('models-sac-halfcheetah/sac_best.pth')
             self.actor.load_state_dict(checkpoint['actor'])
             self.critic.load_state_dict(checkpoint['critic'])
             self.target_critic.load_state_dict(checkpoint['target_critic'])
