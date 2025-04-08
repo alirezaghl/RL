@@ -162,14 +162,8 @@ class DDPG(object):
         self.render_interval = args.render_interval
         self.seed = args.seed
         
-        # Modified path to use the new structure
-        self.video_dir = os.path.join('../../results/ddpg/videos')
-        self.model_dir = os.path.join('../../results/ddpg/models')
-        self.log_dir = os.path.join('../../results/ddpg/logs')
-        
+        self.video_dir = args.video_dir
         os.makedirs(self.video_dir, exist_ok=True)
-        os.makedirs(self.model_dir, exist_ok=True)
-        os.makedirs(self.log_dir, exist_ok=True)
         
         self.rewards = []
         self.avg_rewards = []
@@ -186,6 +180,7 @@ class DDPG(object):
             return action
 
     def step(self, state, action, reward, next_state, done):
+
         self.memory.push(state, action, reward, next_state, done)
         
         self.steps_done += 1
@@ -196,6 +191,7 @@ class DDPG(object):
                 self.update(state_batch, action_batch, reward_batch, next_state_batch, done_batch)
 
     def update(self, states, actions, rewards, next_states, dones):
+
         states = torch.FloatTensor(states).to(device)
         actions = torch.FloatTensor(actions).to(device)
         rewards = torch.FloatTensor(rewards).unsqueeze(1).to(device)
@@ -227,15 +223,11 @@ class DDPG(object):
         for target_param, param in zip(self.target_actor.parameters(), self.actor.parameters()):
             target_param.data.copy_(self.tau * param.data + (1.0 - self.tau) * target_param.data)
 
-    def save_models(self):
-        """Save the models to the model directory"""
-        torch.save(self.actor.state_dict(), os.path.join(self.model_dir, 'actor.pth'))
-        torch.save(self.critic.state_dict(), os.path.join(self.model_dir, 'critic.pth'))
-        torch.save(self.target_actor.state_dict(), os.path.join(self.model_dir, 'target_actor.pth'))
-        torch.save(self.target_critic.state_dict(), os.path.join(self.model_dir, 'target_critic.pth'))
-        print(f"Models saved to {self.model_dir}")
-
     def train(self, max_episodes):
+        if not os.path.exists(self.video_dir):
+            os.makedirs(self.video_dir)
+            
+        should_render = False
         episode_rewards = []
         
         for episode in tqdm(range(1, max_episodes + 1)):
@@ -252,6 +244,7 @@ class DDPG(object):
             truncated = False
             
             while not (done or truncated):
+
                 action = self.select_action(state)
                 
                 # Take action in environment
@@ -286,10 +279,6 @@ class DDPG(object):
                 print(f"Saved episode {episode} as GIF")
                 
                 self.save_learning_curve()
-            
-            # Save models periodically
-            if episode % 100 == 0:
-                self.save_models()
         
         self.save_learning_curve()
         
@@ -303,7 +292,7 @@ class DDPG(object):
         plt.ylabel('Reward')
         plt.title('DDPG Learning Curve')
         plt.legend()
-        plt.savefig(os.path.join(self.log_dir, 'learning_curve.png'))
+        plt.savefig(os.path.join(self.video_dir, 'learning_curve.png'))
         plt.close()
     
     def evaluate(self, eval_episodes=10):
@@ -339,6 +328,7 @@ def main():
     
     parser.add_argument('--render_interval', type=int, default=100, help='Render every N episodes')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
+    parser.add_argument('--video_dir', default='video_ddpg', help='Directory to save videos')
     
     args = parser.parse_args()
     

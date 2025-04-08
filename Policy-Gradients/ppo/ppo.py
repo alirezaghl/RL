@@ -116,15 +116,6 @@ class Agent:
         self.actor = ActorNetwork(n_actions, input_dims, alpha, fc1_dims, fc2_dims)  
         self.critic = CriticNetwork(input_dims, alpha, fc1_dims, fc2_dims)  
         self.memory = PPOMemory(batch_size)        
-        
-        # Set up directories for results
-        self.video_dir = os.path.join('../../results/ppo/videos')
-        self.model_dir = os.path.join('../../results/ppo/models')
-        self.log_dir = os.path.join('../../results/ppo/logs')
-        
-        os.makedirs(self.video_dir, exist_ok=True)
-        os.makedirs(self.model_dir, exist_ok=True)
-        os.makedirs(self.log_dir, exist_ok=True)
     
     def remember(self, state, action, probs, values, reward, done):
         self.memory.store_memory(state, action, probs, values, reward, done)
@@ -204,36 +195,16 @@ class Agent:
         
         self.memory.clear_memory()
     
-    def save_models(self):
+    def save_models(self, path='models'):
+        os.makedirs(path, exist_ok=True)
         print('... saving models ...')
-        torch.save(self.actor.state_dict(), os.path.join(self.model_dir, 'actor.pth'))
-        torch.save(self.critic.state_dict(), os.path.join(self.model_dir, 'critic.pth'))
+        torch.save(self.actor.state_dict(), os.path.join(path, 'actor.pth'))
+        torch.save(self.critic.state_dict(), os.path.join(path, 'critic.pth'))
     
-    def load_models(self):
+    def load_models(self, path='models'):
         print('... loading models ...')
-        self.actor.load_state_dict(torch.load(os.path.join(self.model_dir, 'actor.pth')))
-        self.critic.load_state_dict(torch.load(os.path.join(self.model_dir, 'critic.pth')))
-
-def make_gif(frames, filename):
-    """Create a GIF from a list of frames"""
-    imageio.mimsave(filename, frames, fps=30)
-    print(f"Saved GIF to {filename}")
-
-def record_video(env, agent, video_length=500, filename=""):
-    """Record a video of the agent's performance"""
-    frames = []
-    observation, _ = env.reset()
-    
-    for _ in range(video_length):
-        frames.append(env.render())
-        action, _, _ = agent.choose_action(observation)
-        observation, _, terminated, truncated, _ = env.step(action)
-        
-        if terminated or truncated:
-            break
-    
-    make_gif(frames, filename)
-    return frames
+        self.actor.load_state_dict(torch.load(os.path.join(path, 'actor.pth')))
+        self.critic.load_state_dict(torch.load(os.path.join(path, 'critic.pth')))
 
 def parse_args():
     parser = argparse.ArgumentParser(description='PPO for HalfCheetah')
@@ -266,34 +237,36 @@ def parse_args():
     
     return parser.parse_args()
 
-def create_learning_progress_gif(video_dir):
-    """Create a GIF showing learning progress over time"""
-    video_files = sorted(glob.glob(os.path.join(video_dir, 'episode_*.gif')))
+def make_gif(frames, filename):
+    """Create a GIF from a list of frames"""
+    imageio.mimsave(filename, frames, fps=30)
+    print(f"Saved GIF to {filename}")
+
+def record_video(env, agent, video_length=500, filename=""):
+    """Record a video of the agent's performance"""
+    frames = []
+    observation, _ = env.reset()
     
-    if len(video_files) == 0:
-        return
-    
-    if len(video_files) > 5:
-        indices = np.linspace(0, len(video_files)-1, 5).astype(int)
-        video_files = [video_files[i] for i in indices]
-    
-    all_frames = []
-    for video_file in video_files:
-        reader = imageio.get_reader(video_file)
-        frames = []
-        for frame in reader:
-            frames.append(imageio.core.util.Array(frame))
+    for _ in range(video_length):
+        frames.append(env.render())
+        action, _, _ = agent.choose_action(observation)
+        observation, _, terminated, truncated, _ = env.step(action)
         
-        all_frames.extend(frames[:100])  # Limit to first 100 frames
+        if terminated or truncated:
+            break
     
-    if all_frames:
-        imageio.mimsave(os.path.join(video_dir, 'learning_progress.gif'), all_frames, fps=30)
-        print("Created learning progress GIF")
+    make_gif(frames, filename)
+    return frames
 
 def train(args):
     # Set seeds
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
+    
+    # Create directories
+    os.makedirs('results', exist_ok=True)
+    os.makedirs('videos', exist_ok=True)
+    os.makedirs('models', exist_ok=True)
     
     # Create environment (with render_mode for visualizations)
     render_mode = 'rgb_array' if not args.no_gif else None
@@ -313,10 +286,6 @@ def train(args):
         fc1_dims=args.fc1_dims,
         fc2_dims=args.fc2_dims
     )
-    
-    # Reward logging file
-    reward_log_file = open(os.path.join(agent.log_dir, 'reward_log.csv'), 'w')
-    reward_log_file.write('episode,reward,avg_reward_100\n')
     
     # For tracking progress
     best_score = env.reward_range[0]
@@ -354,10 +323,6 @@ def train(args):
         avg_score = np.mean(score_history[-100:]) if len(score_history) >= 100 else np.mean(score_history)
         avg_history.append(avg_score)
         
-        # Log reward
-        reward_log_file.write(f'{episode},{score:.2f},{avg_score:.2f}\n')
-        reward_log_file.flush()
-        
         pbar.set_postfix({
             'score': f'{score:.1f}',
             'avg_100': f'{avg_score:.1f}',
@@ -365,49 +330,24 @@ def train(args):
             'updates': learn_steps
         })
         
-        # Save best model
         if avg_score > best_score:
             best_score = avg_score
             agent.save_models()
         
-        # Log and save periodically
-        if episode % args.log_interval == 0:
-            print(f"Episode {episode}, Score: {score:.1f}, Avg: {avg_score:.1f}")
-        
-        if episode % args.save_interval == 0:
-            # Plot learning curve
-            plt.figure(figsize=(12, 8))
-            plt.plot(score_history, alpha=0.4, color='blue', label='Episode Scores')
-            plt.plot(avg_history, linewidth=2, color='red', label='100-episode Average')
-            plt.xlabel('Episode')
-            plt.ylabel('Score')
-            plt.title(f'PPO Learning Curve - {args.env}')
-            plt.grid(True, alpha=0.3)
-            plt.legend()
-            plt.savefig(os.path.join(agent.log_dir, f'learning_curve_ep{episode}.png'))
-            plt.close()
-        
         # Record video periodically
         if not args.no_gif and episode > 0 and episode % args.render_interval == 0:
             video_env = gym.make(args.env, render_mode='rgb_array')
-            video_filename = os.path.join(agent.video_dir, f'episode_{episode}.gif')
+            video_filename = f'videos/episode_{episode}.gif'
             record_video(video_env, agent, filename=video_filename)
             video_env.close()
     
-    # Close reward log file
-    reward_log_file.close()
-    
-    # Record final performance
     if not args.no_gif:
         agent.load_models()
         video_env = gym.make(args.env, render_mode='rgb_array')
-        record_video(video_env, agent, filename=os.path.join(agent.video_dir, 'final_performance.gif'))
+        record_video(video_env, agent, filename='videos/final_performance.gif')
         video_env.close()
-        
-        # Create learning progress GIF
-        create_learning_progress_gif(agent.video_dir)
     
-    # Final learning curve
+    # Plot learning curve
     plt.figure(figsize=(12, 8))
     plt.plot(score_history, alpha=0.4, color='blue', label='Episode Scores')
     plt.plot(avg_history, linewidth=2, color='red', label='100-episode Average')
@@ -416,11 +356,41 @@ def train(args):
     plt.title(f'PPO Learning Curve - {args.env}')
     plt.grid(True, alpha=0.3)
     plt.legend()
-    plt.savefig(os.path.join(agent.log_dir, 'learning_curve.png'))
+    plt.savefig('results/learning_curve.png')
     plt.close()
+    
+    if not args.no_gif:
+        create_learning_progress_gif()
     
     env.close()
     return score_history
+
+def create_learning_progress_gif():
+    """Create a GIF showing learning progress over time"""
+    video_files = sorted(glob.glob('videos/episode_*.gif'))
+    
+    if len(video_files) == 0:
+        return
+    
+    if len(video_files) > 5:
+        indices = np.linspace(0, len(video_files)-1, 5).astype(int)
+        video_files = [video_files[i] for i in indices]
+    
+    all_frames = []
+    for video_file in video_files:
+        episode = int(video_file.split('_')[-1].split('.')[0])
+        
+        reader = imageio.get_reader(video_file)
+        frames = []
+        for frame in reader:
+            frames.append(imageio.core.util.Array(frame))
+        
+        title_frame = np.ones((frames[0].shape[0], frames[0].shape[1], 3), dtype=np.uint8) * 255
+        
+        all_frames.extend(frames[:100])  # Limit to first 100 frames to keep GIF manageable
+    
+    imageio.mimsave('videos/learning_progress.gif', all_frames, fps=30)
+    print("Created learning progress GIF")
 
 if __name__ == '__main__':
     args = parse_args()
