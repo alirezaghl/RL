@@ -25,3 +25,5 @@ minibatch_size = 64  # Size of minibatches for updates
 
 3. [Arena Chapter 2: PPO Implementation](https://arena-chapter2-rl.streamlit.app/[2.3]_PPO)
 
+4. [What Matters for On-Policy Deep Actor-Critic Methods? A Large-Scale Study](https://openreview.net/forum?id=nIAxjsniDzg)
+
