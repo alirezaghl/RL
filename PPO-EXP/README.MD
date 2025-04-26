@@ -21,7 +21,7 @@ minibatch_size = 64  # Size of minibatches for updates
 
 1. [Schulman, J., Wolski, F., Dhariwal, P., Radford, A., & Klimov, O. (2017). Proximal Policy Optimization Algorithms](https://arxiv.org/pdf/1707.06347)
 
-2. [The 37 Implementation Details of Proximal Policy Optimization](The 37 Implementation Details of Proximal Policy Optimization)
+2. [The 37 Implementation Details of Proximal Policy Optimization](https://iclr-blog-track.github.io/2022/03/25/ppo-implementation-details/)
 
 3. [Arena Chapter 2: PPO Implementation](https://arena-chapter2-rl.streamlit.app/[2.3]_PPO)
 
