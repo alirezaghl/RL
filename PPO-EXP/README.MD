@@ -1,5 +1,4 @@
-This repository contains a comprehensive implementation of Proximal Policy Optimization (PPO) for training agents in continuous control environments. 
-
+While I had previously created a simpler PPO implementation, the growing popularity of this algorithm in developing reasoning models (although differently than in robotic control applications) motivated me to explore its details further. This investigation led me to the valuable resources listed in the references section, which I then used directly to design and implement this better version of PPO.
 ![Walker2d Training Performance](https://github.com/alirezaghl/RL/blob/main/PPO-EXP/episode_19999_reward_4346.5.gif)
 
 
