@@ -30,7 +30,6 @@ def parse_arguments():
     return parser.parse_args()
 
 def set_seeds(seed):
-    """Set random seeds for reproducibility"""
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
@@ -85,42 +84,32 @@ def train_reinforce(env, policy_net, optimizer, num_episodes, gamma=0.99, log_in
             # Get action distribution from policy
             policy_dist, _ = policy_net(state_tensor)
             
-            # Sample action from distribution
             action = torch.multinomial(policy_dist, 1).item()
             
-            # Store log probability of selected action
             log_prob = torch.log(policy_dist[0, action])
             episode_log_probs.append(log_prob)
             
-            # Take action in environment
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             
-            # Store reward
             episode_rewards.append(reward)
             
-            # Update state
             state = next_state
         
-        # Episode complete - calculate total reward and store
         total_episode_reward = sum(episode_rewards)
         episode_rewards_history.append(total_episode_reward)
         
-        # Calculate returns at each timestep
         returns = compute_returns(episode_rewards, gamma)
         returns_tensor = torch.FloatTensor(returns).to(next(policy_net.parameters()).device)
         
-        # Calculate loss
         policy_loss = 0
         for step_log_prob, step_return in zip(episode_log_probs, returns_tensor):
             policy_loss += -step_log_prob * step_return
         
-        # Update policy
         optimizer.zero_grad()
         policy_loss.backward()
         optimizer.step()
         
-        # Log progress
         if (episode + 1) % log_interval == 0:
             avg_reward = np.mean(episode_rewards_history[-log_interval:])
             print(f"Episode {episode + 1}, Average Reward (last {log_interval}): {avg_reward:.2f}")
@@ -189,22 +178,18 @@ def train_reinforce_with_baseline(env, policy_net, value_net, policy_optimizer, 
         
         returns_tensor = returns_tensor.view(-1, 1)  
         
-        # Calculate advantage
         advantages = returns_tensor - values_tensor.detach()
         
-        # Calculate policy loss using advantage
         policy_loss = 0
         for step_log_prob, advantage in zip(episode_log_probs, advantages.squeeze()):
             policy_loss += -step_log_prob * advantage
             
         value_loss = nn.MSELoss()(values_tensor.squeeze(), returns_tensor.squeeze())
         
-        # Update policy
         policy_optimizer.zero_grad()
         policy_loss.backward()
         policy_optimizer.step()
         
-        # Update value network
         value_optimizer.zero_grad()
         value_loss.backward()
         value_optimizer.step()
@@ -240,7 +225,6 @@ def main():
     env = gym.make(args.env)
     env.reset(seed=args.seed)
         
-    # Create results storage
     rewards_no_baseline = None
     rewards_with_baseline = None
     
@@ -281,11 +265,9 @@ def main():
         plt.plot(rewards_no_baseline, label="Without Baseline", alpha=0.3, color='tab:blue')
         plt.plot(rewards_with_baseline, label="With Baseline", alpha=0.3, color='tab:green')
         
-        # Compute EMAs
         ema_no_baseline = exponential_moving_average(rewards_no_baseline, window_size)
         ema_with_baseline = exponential_moving_average(rewards_with_baseline, window_size)
         
-        # Plot EMAs
         plt.plot(ema_no_baseline, label="Exponential Moving Avg (No Baseline)", linestyle='--', color='tab:blue')
         plt.plot(ema_with_baseline, label="Exponential Moving Avg (With Baseline)", linestyle='--', color='tab:green')
         
@@ -302,10 +284,8 @@ def main():
         plt.figure(figsize=(12, 6))
         plt.plot(rewards_no_baseline, label="REINFORCE", alpha=0.3, color='tab:blue')
         
-        # Compute EMA
         ema_no_baseline = exponential_moving_average(rewards_no_baseline, window_size)
         
-        # Plot EMA
         plt.plot(ema_no_baseline, label="Exponential Moving Avg", linestyle='--', color='tab:blue')
         
         plt.xlabel("Episode")
@@ -323,7 +303,6 @@ def main():
         
         ema_with_baseline = exponential_moving_average(rewards_with_baseline, window_size)
         
-        # Plot EMA
         plt.plot(ema_with_baseline, label="Exponential Moving Avg", linestyle='--', color='tab:green')
         
         plt.xlabel("Episode")
