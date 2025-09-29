@@ -1,22 +1,9 @@
-## Overview
-
 REINFORCE is a policy gradient method that directly optimizes the policy without using a value function. This implementation includes:
 
 1. **Standard REINFORCE**: Vanilla implementation using Monte Carlo returns
 2. **REINFORCE with Baseline**: An improved version that uses a value function to reduce variance
 
 The baseline version typically converges faster and more stably because it reduces the variance of the policy gradient.
-
-
-## Usage
-
-```bash
-# Run both versions (with and without baseline) for comparison
-python reinforce.py --episodes 1000
-
-# Run only the baseline version
-python reinforce.py --use_baseline --episodes 1000
-```
 
 
 ## Parameters
