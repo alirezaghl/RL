@@ -212,32 +212,26 @@ class SAC(object):
         return policy_loss, log_pi
 
     def learn(self, states, actions, rewards, next_states, dones):
-        # Convert numpy arrays to float32 tensors
         states = torch.tensor(states, dtype=torch.float32).to(device)
         actions = torch.tensor(actions, dtype=torch.float32).to(device)
         rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(1).to(device)
         next_states = torch.tensor(next_states, dtype=torch.float32).to(device)
         dones = torch.tensor(dones, dtype=torch.float32).unsqueeze(1).to(device)
 
-        # Compute target Q values
         next_q_value = self._calculate_target_q(next_states, rewards, dones)
         
-        # Update critic
         qf_loss = self._calculate_critic_loss(states, actions, next_q_value)
         self.critic_optim.zero_grad()
         qf_loss.backward()
         self.critic_optim.step()
 
-        # Update actor
         policy_loss, log_pi = self._calculate_actor_loss(states)
         self.actor_optim.zero_grad()
         policy_loss.backward()
         self.actor_optim.step()
         
-        # Soft update target networks
         self.soft_update(self.tau)
         
-        # Update entropy coefficient if auto-tuning
         if self.auto_entropy:
             alpha_loss = -(self.log_alpha * (log_pi + self.target_entropy).detach()).mean()
             
@@ -259,7 +253,6 @@ class SAC(object):
         os.makedirs('models-sac-halfcheetah', exist_ok=True)
         os.makedirs('logs-sac-halfcheetah', exist_ok=True)
         
-        # For visualization
         all_frames = []
         episode_rewards = []
         best_reward = float('-inf')
@@ -273,35 +266,27 @@ class SAC(object):
             done = False
             
             while not done:
-                # Select action
                 action = self.select_action(state)
                 
-                # Take action in environment
                 next_state, reward, terminated, truncated, _ = self.env.step(action)
                 done = terminated or truncated
                 
-                # Store transition and update
                 self.step(state, action, reward, next_state, done)
                 
-                # Move to next state
                 state = next_state
                 episode_reward += reward
             
-            # Save episode reward
             episode_rewards.append(episode_reward)
             avg_reward = np.mean(episode_rewards[-100:]) if len(episode_rewards) >= 100 else np.mean(episode_rewards)
             
-            # Log reward to file
             reward_log_file.write(f'{episode},{episode_reward:.2f},{avg_reward:.2f}\n')
             reward_log_file.flush()
             
-            # Update progress bar
             pbar.set_postfix({
                 'reward': f'{episode_reward:.2f}',
                 'avg_reward': f'{avg_reward:.2f}'
             })
             
-            # Save best model
             if avg_reward > best_reward and episode > 10:
                 best_reward = avg_reward
                 torch.save({
@@ -311,38 +296,30 @@ class SAC(object):
                 }, 'models-sac-halfcheetah/sac_best.pth')
                 print(f"New best model saved with avg reward: {avg_reward:.2f}")
             
-            # Log rewards and update plots at specified intervals
             if episode % self.reward_log_interval == 0 or episode == num_episodes - 1:
                 self.plot_rewards(episode_rewards, episode)
                 print(f"Episode {episode}: Avg reward over last 100 episodes: {avg_reward:.2f}")
             
-            # Render and save video periodically
             if episode % self.render_interval == 0 or episode == num_episodes - 1:
                 frames = self.record_video(f"video-sac-halfcheetah/episode_{episode}.gif")
                 if frames:
                     all_frames.extend(frames[:100])  # Keep representation frames for final video
                 
-                # Periodically clear CUDA cache if using GPU
                 if device.type == 'cuda':
                     torch.cuda.empty_cache()
         
-        # Close log file
         reward_log_file.close()
         
-        # Create final learning progress video
         if all_frames:
             imageio.mimsave('video-sac-halfcheetah/learning_progress.gif', all_frames, fps=30)
             
-        # Final rewards plot
         self.plot_rewards(episode_rewards, num_episodes)
         
-        # Final evaluation
         self.record_video("video-sac-halfcheetah/final.gif")
         
         return episode_rewards
     
     def record_video(self, filename, num_frames=500):
-        """Record agent performance as a video"""
         eval_env = gym.make('HalfCheetah-v4', render_mode='rgb_array')
         frames = []
         total_reward = 0
@@ -353,10 +330,8 @@ class SAC(object):
             frame = eval_env.render()
             frames.append(frame)
             
-            # Select action
             action = self.select_action(state, evaluate=True)
             
-            # Step environment
             next_state, reward, terminated, truncated, _ = eval_env.step(action)
             total_reward += reward
             done = terminated or truncated
@@ -366,7 +341,6 @@ class SAC(object):
                 
             state = next_state
         
-        # Save video
         if frames:
             imageio.mimsave(filename, frames, fps=30)
             print(f"Saved video to {filename} (Eval reward: {total_reward:.2f})")
@@ -375,17 +349,14 @@ class SAC(object):
         return frames
         
     def plot_rewards(self, rewards, episode):
-        """Plot rewards over episodes"""
         plt.figure(figsize=(12, 6))
         
-        # Plot episode rewards
         plt.subplot(1, 2, 1)
         plt.plot(rewards)
         plt.xlabel('Episode')
         plt.ylabel('Reward')
         plt.title(f'Episode Rewards (Current: {rewards[-1]:.2f})')
         
-        # Plot moving average
         plt.subplot(1, 2, 2)
         moving_avg = [np.mean(rewards[max(0, i-99):i+1]) for i in range(len(rewards))]
         plt.plot(moving_avg)
@@ -398,7 +369,6 @@ class SAC(object):
         plt.close()
         
     def load_best_model(self):
-        """Load the best saved model"""
         try:
             checkpoint = torch.load('models-sac-halfcheetah/sac_best.pth')
             self.actor.load_state_dict(checkpoint['actor'])

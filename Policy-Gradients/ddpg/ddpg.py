@@ -247,7 +247,6 @@ class DDPG(object):
 
                 action = self.select_action(state)
                 
-                # Take action in environment
                 next_state, reward, done, truncated, _ = self.env.step(action)
                 
                 if should_render:
@@ -259,17 +258,13 @@ class DDPG(object):
                 state = next_state
                 episode_reward += reward
             
-            # Store reward for plotting
             episode_rewards.append(episode_reward)
             
-            # Calculate moving average
             avg_reward = np.mean(episode_rewards[-100:]) if len(episode_rewards) >= 100 else np.mean(episode_rewards)
             
-            # Save for visualization
             self.rewards.append(episode_reward)
             self.avg_rewards.append(avg_reward)
             
-            # Print progress
             if episode % 10 == 0:
                 print(f"Episode {episode}, Reward: {episode_reward:.2f}, Avg Reward: {avg_reward:.2f}")
             

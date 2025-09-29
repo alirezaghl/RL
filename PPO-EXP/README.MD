@@ -1,5 +1,4 @@
-This repository contains a comprehensive implementation of Proximal Policy Optimization (PPO) for training agents in continuous control environments. 
-
+While I had previously created a simpler PPO implementation, the growing popularity of this algorithm in developing reasoning models (although differently than in robotic control applications) motivated me to explore its details further. This investigation led me to the valuable resources listed in the references section, which I then used directly to design and implement this better version of PPO.
 ![Walker2d Training Performance](https://github.com/alirezaghl/RL/blob/main/PPO-EXP/episode_19999_reward_4346.5.gif)
 
 
@@ -19,9 +18,11 @@ minibatch_size = 64  # Size of minibatches for updates
 ```
 
 
-1. Schulman, J., Wolski, F., Dhariwal, P., Radford, A., & Klimov, O. (2017). Proximal Policy Optimization Algorithms. arXiv preprint arXiv:1707.06347.
+1. [Schulman, J., Wolski, F., Dhariwal, P., Radford, A., & Klimov, O. (2017). Proximal Policy Optimization Algorithms](https://arxiv.org/pdf/1707.06347)
 
-2. "Implementation Matters in Deep RL: A Case Study on PPO and TRPO." by Logan Engstrom, Andrew Ilyas, Shibani Santurkar, Dimitris Tsipras, Firdaus Janoos, Larry Rudolph, and Aleksander Madry.
+2. [The 37 Implementation Details of Proximal Policy Optimization](https://iclr-blog-track.github.io/2022/03/25/ppo-implementation-details/)
 
 3. [Arena Chapter 2: PPO Implementation](https://arena-chapter2-rl.streamlit.app/[2.3]_PPO)
+
+4. [What Matters for On-Policy Deep Actor-Critic Methods? A Large-Scale Study](https://openreview.net/forum?id=nIAxjsniDzg)
 

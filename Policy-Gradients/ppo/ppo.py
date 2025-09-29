@@ -209,17 +209,14 @@ class Agent:
 def parse_args():
     parser = argparse.ArgumentParser(description='PPO for HalfCheetah')
     
-    # Environment
     parser.add_argument('--env', type=str, default='HalfCheetah-v4', help='Gymnasium environment')
     
-    # Training parameters
     parser.add_argument('--episodes', type=int, default=2000, help='Number of episodes')
     parser.add_argument('--horizon', type=int, default=2048, help='Steps before update')
     parser.add_argument('--log-interval', type=int, default=10, help='Print interval')
     parser.add_argument('--save-interval', type=int, default=100, help='Model save interval')
     parser.add_argument('--render-interval', type=int, default=100, help='Render GIF interval')
     
-    # PPO hyperparameters
     parser.add_argument('--gamma', type=float, default=0.99, help='Discount factor')
     parser.add_argument('--alpha', type=float, default=3e-4, help='Learning rate')
     parser.add_argument('--gae-lambda', type=float, default=0.95, help='GAE lambda')
@@ -227,23 +224,19 @@ def parse_args():
     parser.add_argument('--batch-size', type=int, default=64, help='Batch size')
     parser.add_argument('--n-epochs', type=int, default=10, help='PPO epochs')
     
-    # Network parameters
     parser.add_argument('--fc1-dims', type=int, default=256, help='First hidden layer size')
     parser.add_argument('--fc2-dims', type=int, default=256, help='Second hidden layer size')
     
-    # Misc
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
     parser.add_argument('--no-gif', action='store_true', help='Disable GIF creation')
     
     return parser.parse_args()
 
 def make_gif(frames, filename):
-    """Create a GIF from a list of frames"""
     imageio.mimsave(filename, frames, fps=30)
     print(f"Saved GIF to {filename}")
 
 def record_video(env, agent, video_length=500, filename=""):
-    """Record a video of the agent's performance"""
     frames = []
     observation, _ = env.reset()
     
@@ -259,7 +252,6 @@ def record_video(env, agent, video_length=500, filename=""):
     return frames
 
 def train(args):
-    # Set seeds
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     
@@ -268,11 +260,9 @@ def train(args):
     os.makedirs('videos', exist_ok=True)
     os.makedirs('models', exist_ok=True)
     
-    # Create environment (with render_mode for visualizations)
     render_mode = 'rgb_array' if not args.no_gif else None
     env = gym.make(args.env, render_mode=render_mode)
     
-    # Create agent
     agent = Agent(
         n_actions=env.action_space.shape[0],
         input_dims=[env.observation_space.shape[0]],
@@ -347,7 +337,6 @@ def train(args):
         record_video(video_env, agent, filename='videos/final_performance.gif')
         video_env.close()
     
-    # Plot learning curve
     plt.figure(figsize=(12, 8))
     plt.plot(score_history, alpha=0.4, color='blue', label='Episode Scores')
     plt.plot(avg_history, linewidth=2, color='red', label='100-episode Average')
@@ -366,7 +355,6 @@ def train(args):
     return score_history
 
 def create_learning_progress_gif():
-    """Create a GIF showing learning progress over time"""
     video_files = sorted(glob.glob('videos/episode_*.gif'))
     
     if len(video_files) == 0:

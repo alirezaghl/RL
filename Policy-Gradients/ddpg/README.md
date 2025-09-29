@@ -3,27 +3,6 @@
 DDPG is an off-policy algorithm that combines the ideas of DQN and policy gradients. It's designed for continuous action spaces and uses a deterministic policy with exploration noise.
 
 
-
-## Usage
-
-```bash
-# Run DDPG with default parameters
-python ddpg.py
-
-# Run with custom parameters
-python ddpg.py --episodes 1000 --gamma 0.99
-```
-
-### Key Parameters
-
-```bash
-# Adjust network architecture
-python ddpg.py --hidden_1 512 --hidden_2 256
-
-# Modify learning rates
-python ddpg.py --critic_lr 0.001 --actor_lr 0.0001
-```
-
 ## Parameters
 
 | Parameter | Description | Default |
@@ -40,11 +19,3 @@ python ddpg.py --critic_lr 0.001 --actor_lr 0.0001
 | `--update_rate` | How often to update networks | 1 |
 | `--episodes` | Number of episodes | 1000 |
 | `--render_interval` | Render every N episodes | 100 |
-| `--seed` | Random seed | 42 |
-
-
-
-
-## Visualization
-
-The implementation records GIFs of agent performance and generates learning curves to visualize progress over time.
